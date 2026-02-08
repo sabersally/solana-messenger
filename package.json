@@ -1,0 +1,19 @@
+{
+  "name": "solana-messenger",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "sdk"
+  ],
+  "scripts": {
+    "build:sdk": "cd sdk && npm run build",
+    "test": "anchor test"
+  },
+  "devDependencies": {
+    "@coral-xyz/anchor": "^0.30.1",
+    "chai": "^4.3.6",
+    "mocha": "^10.2.0",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^5.3.3"
+  }
+}

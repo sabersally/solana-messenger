@@ -1,0 +1,112 @@
+{
+  "address": "msg1jhfewu1hGDnQKGhXDmqas6JZTq7Lg7PbSX5jY9y",
+  "metadata": {
+    "name": "messenger",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Encrypted agent-to-agent messaging on Solana"
+  },
+  "instructions": [
+    {
+      "name": "send_message",
+      "discriminator": [
+        57,
+        40,
+        34,
+        178,
+        189,
+        10,
+        65,
+        26
+      ],
+      "accounts": [
+        {
+          "name": "sender",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "recipient",
+          "type": "pubkey"
+        },
+        {
+          "name": "ciphertext",
+          "type": "bytes"
+        },
+        {
+          "name": "nonce",
+          "type": {
+            "array": [
+              "u8",
+              24
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "MessageSent",
+      "discriminator": [
+        116,
+        70,
+        224,
+        76,
+        128,
+        28,
+        110,
+        55
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "MessageTooLarge",
+      "msg": "Message exceeds maximum size of 900 bytes"
+    },
+    {
+      "code": 6001,
+      "name": "EmptyMessage",
+      "msg": "Message cannot be empty"
+    }
+  ],
+  "types": [
+    {
+      "name": "MessageSent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "sender",
+            "type": "pubkey"
+          },
+          {
+            "name": "recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "ciphertext",
+            "type": "bytes"
+          },
+          {
+            "name": "nonce",
+            "type": {
+              "array": [
+                "u8",
+                24
+              ]
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ]
+}
