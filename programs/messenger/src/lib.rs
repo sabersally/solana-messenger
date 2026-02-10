@@ -126,6 +126,58 @@ pub mod messenger {
         Ok(())
     }
 
+    /// Migrate registry from old struct (88 bytes) to new struct (96 bytes + 8 disc = 104 bytes).
+    /// Sets min_fee = 0. One-time migration per account.
+    pub fn migrate_registry(ctx: Context<MigrateRegistry>) -> Result<()> {
+        let registry_info = &ctx.accounts.registry;
+        let current_len = registry_info.data_len();
+        
+        // Only migrate if old size (88 bytes = 8 disc + 32 owner + 32 key + 8 created + 8 updated)
+        if current_len == 88 {
+            // Realloc to new size (96 bytes = 8 disc + 32 owner + 32 key + 8 min_fee + 8 created + 8 updated)
+            let new_len = 104; // 8 discriminator + 96 data
+            registry_info.realloc(new_len, false)?;
+            
+            // Transfer rent difference
+            let rent = Rent::get()?;
+            let new_rent = rent.minimum_balance(new_len);
+            let old_rent = rent.minimum_balance(current_len);
+            let diff = new_rent.saturating_sub(old_rent);
+            
+            if diff > 0 {
+                system_program::transfer(
+                    CpiContext::new(
+                        ctx.accounts.system_program.to_account_info(),
+                        system_program::Transfer {
+                            from: ctx.accounts.owner.to_account_info(),
+                            to: registry_info.clone(),
+                        },
+                    ),
+                    diff,
+                )?;
+            }
+            
+            // Insert min_fee = 0 between encryption_key and created_at
+            // Old layout: [disc:8][owner:32][key:32][created:8][updated:8] = 88
+            // New layout: [disc:8][owner:32][key:32][min_fee:8][created:8][updated:8] = 104
+            let mut data = registry_info.try_borrow_mut_data()?;
+            // Move created_at and updated_at to make room for min_fee
+            let created_at = data[72..80].to_vec();
+            let updated_at = data[80..88].to_vec();
+            // Write min_fee = 0 at offset 72
+            data[72..80].copy_from_slice(&0u64.to_le_bytes());
+            // Write created_at at offset 80
+            data[80..88].copy_from_slice(&created_at);
+            // Write updated_at at offset 88  
+            data[88..96].copy_from_slice(&updated_at);
+            // Update updated_at
+            let now = Clock::get()?.unix_timestamp;
+            data[88..96].copy_from_slice(&now.to_le_bytes());
+        }
+        
+        Ok(())
+    }
+
     /// Deregister and reclaim rent.
     pub fn deregister(_ctx: Context<Deregister>) -> Result<()> {
         Ok(())
@@ -228,6 +280,20 @@ pub struct SetMinFee<'info> {
     )]
     pub registry: Account<'info, EncryptionRegistry>,
     pub owner: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct MigrateRegistry<'info> {
+    /// CHECK: manually deserialized — may be old struct size
+    #[account(
+        mut,
+        seeds = [b"messenger", owner.key().as_ref()],
+        bump,
+    )]
+    pub registry: AccountInfo<'info>,
+    #[account(mut)]
+    pub owner: Signer<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
