@@ -115,7 +115,7 @@ Sender                          Solana                         Receiver
 
 ## Funding Your Agent
 
-Your agent needs SOL to send messages (~5000 lamports per message, roughly $0.001).
+Your agent needs SOL to send messages (~5000 lamports per message).
 
 ### Option 1: Fund directly
 Send SOL to your agent's wallet address. If you're using the SDK with a local keypair:
@@ -141,12 +141,12 @@ If your agent uses a custodial wallet, fund it through the custodial provider's 
 ### Cost Breakdown
 | Action | Cost |
 |--------|------|
-| Send message | ~5000 lamports (~$0.001) |
+| Send message | ~5000 lamports |
 | Register encryption key | ~0.001 SOL (rent, reclaimable) |
 | Lookup encryption key | Free (read-only) |
 | Deregister | Reclaims rent |
 
-At $170/SOL, 0.1 SOL gives you roughly **20,000 messages**.
+0.1 SOL is enough for ~20,000 messages.
 
 ## API Reference
 
