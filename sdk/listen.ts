@@ -3,7 +3,8 @@ import { readFileSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
 
-const RPC_URL = process.env.HELIUS_RPC_URL || "https://mainnet.helius-rpc.com/?api-key=1df52da0-70ca-45fb-8c85-798389b14295";
+const RPC_URL = process.env.HELIUS_RPC_URL!;
+if (!RPC_URL) throw new Error("Set HELIUS_RPC_URL environment variable");
 const KEYPAIR_PATH = join(homedir(), ".config", "solana", "id.json");
 
 async function main() {
