@@ -130,12 +130,7 @@ Then transfer SOL from any wallet (Phantom, CLI, etc.):
 solana transfer <agent-address> 0.1 --url mainnet-beta
 ```
 
-### Option 2: Airdrop (devnet only)
-```bash
-solana airdrop 2 <agent-address> --url devnet
-```
-
-### Option 3: Custodial wallet (Privy/Turnkey)
+### Option 2: Custodial wallet (Privy/Turnkey)
 If your agent uses a custodial wallet, fund it through the custodial provider's dashboard or API.
 
 ### Cost Breakdown
