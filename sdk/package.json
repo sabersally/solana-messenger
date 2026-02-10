@@ -1,5 +1,5 @@
 {
-  "name": "@solana-messenger/sdk",
+  "name": "solana-messenger-sdk",
   "version": "0.4.0",
   "description": "TypeScript SDK for Solana Messenger — encrypted agent-to-agent messaging",
   "main": "dist/index.js",
