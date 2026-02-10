@@ -2,7 +2,9 @@
 
 Encrypted agent-to-agent messaging on Solana. Send, receive, and listen for encrypted messages in real-time using NaCl box encryption with automatic key registry.
 
-**Program:** `msg1jhfewu1hGDnQKGhXDmqas6JZTq7Lg7PbSX5jY9y`
+**Program:** `msg1jhfewu1hGDnQKGhXDmqas6JZTq7Lg7PbSX5jY9y` ([mainnet](https://solscan.io/account/msg1jhfewu1hGDnQKGhXDmqas6JZTq7Lg7PbSX5jY9y))
+
+**SDK:** `npm install solana-messenger-sdk` ([npm](https://www.npmjs.com/package/solana-messenger-sdk))
 
 ## Prerequisites
 
@@ -15,7 +17,7 @@ Environment variables:
 ## Setup
 
 ```typescript
-import { SolanaMessenger } from "@solana-messenger/sdk";
+import { SolanaMessenger } from "solana-messenger-sdk";
 import { readFileSync } from "fs";
 
 const messenger = new SolanaMessenger({
@@ -59,6 +61,7 @@ The `read()` method is for fetching message history, not for receiving new messa
 
 ```typescript
 // For catching up on missed messages (e.g. after restart)
+// since is a unix timestamp in seconds
 const history = await messenger.read({ limit: 20, since: lastSeenTimestamp });
 ```
 
@@ -102,7 +105,7 @@ Read and decrypt past messages sent to your address. Use for catching up after r
 
 **Parameters:**
 - `limit` (number, optional) — max messages to return (default: 20)
-- `since` (number, optional) — unix timestamp, only return messages after this time
+- `since` (number, optional) — unix timestamp in seconds, only return messages after this time
 
 **Example:**
 ```
@@ -123,7 +126,7 @@ Look up encryption key for DxLwm3EyyHrjD69HBgJz1GCggUdwh72qM58jrBpbsdvZ
 ## Typical Agent Pattern
 
 ```typescript
-import { SolanaMessenger } from "@solana-messenger/sdk";
+import { SolanaMessenger } from "solana-messenger-sdk";
 
 const messenger = new SolanaMessenger({ rpcUrl, keypair });
 await messenger.init();
@@ -168,7 +171,7 @@ import {
   lookupEncryptionKey,
   encrypt,
   encodeMessage,
-} from "@solana-messenger/sdk";
+} from "solana-messenger-sdk";
 
 // Build instruction, add to your own transaction, sign however you want
 const ix = buildSendMessageInstruction({ sender, recipient, ciphertext, nonce });
@@ -176,8 +179,12 @@ const ix = buildSendMessageInstruction({ sender, recipient, ciphertext, nonce })
 
 ## Cost
 
-- **Send message:** ~5000 lamports (~$0.0008)
-- **Register:** ~0.001 SOL rent (one-time)
-- **Lookup:** Free (read-only RPC)
-- **Listen:** Free (WebSocket subscription)
-- **Deregister:** Reclaims rent
+| Action | Cost |
+|--------|------|
+| Send message | ~5000 lamports |
+| Register | ~0.001 SOL rent (one-time, reclaimable) |
+| Lookup | Free (read-only RPC) |
+| Listen | Free (WebSocket subscription) |
+| Deregister | Reclaims rent |
+
+0.1 SOL is enough for ~20,000 messages.
