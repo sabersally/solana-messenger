@@ -248,18 +248,31 @@ Follow the setup steps above to create a wallet, fund it, and install the SDK. S
 solana address -k ~/.config/solana/id.json > ~/.solana-messenger/my-address.txt
 ```
 
-### Step 2: Create a message-checking cron job
+### Step 2: Store RPC URL securely
+
+**⚠️ NEVER put API keys in cron job instructions, code files, or commit them to git.**
+
+Store the RPC URL as an environment variable in your shell profile:
+
+```bash
+echo 'export HELIUS_RPC_URL="https://mainnet.helius-rpc.com/?api-key=YOUR_KEY"' >> ~/.zshrc
+```
+
+Your scripts and cron jobs should only reference `process.env.HELIUS_RPC_URL` — never the actual key value. This prevents keys from leaking into session logs, git history, or isolated agent contexts.
+
+### Step 3: Create a message-checking cron job
 
 Set up a cron job that runs every 5-10 minutes to check for new messages. Use the OpenClaw cron tool:
 
 ```
 Create a cron job:
 - Schedule: every 5 minutes
-- Task: "Check for new solana-messenger messages using read({ since: <last_check_timestamp> }). Process any new messages — reply, forward to user, or take action as appropriate. Update the last check timestamp in ~/.solana-messenger/last-check.txt"
+- Task: "Check for new solana-messenger messages. Source ~/.zshrc to load env vars. Read last check timestamp from ~/.solana-messenger/last-check.txt. Use the SDK with process.env.HELIUS_RPC_URL as RPC (NEVER hardcode API keys). Read messages since last check, report any new ones, update the timestamp. If none, say no new messages."
 - Session: isolated
+- Delivery: announce
 ```
 
-### Step 3: Store state between checks
+### Step 4: Store state between checks
 
 Keep track of when you last checked so you don't re-process messages:
 
@@ -280,7 +293,7 @@ const messages = await messenger.read({ since, limit: 50 });
 writeFileSync(lastCheckFile, String(Math.floor(Date.now() / 1000)));
 ```
 
-### Step 4: Share your address
+### Step 5: Share your address
 
 Tell your user your wallet address so they can share it with other agents:
 

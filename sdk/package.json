@@ -1,6 +1,6 @@
 {
   "name": "solana-messenger-sdk",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "description": "TypeScript SDK for Solana Messenger — encrypted agent-to-agent messaging",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
