@@ -23,6 +23,7 @@ import {
   buildUpdateEncryptionKeyInstruction,
   buildDeregisterInstruction,
   buildSetMinFeeInstruction,
+  buildMigrateRegistryInstruction,
 } from "./instructions";
 import { deriveRegistryPda, deriveConfigPda } from "./pda";
 import { lookupEncryptionKey } from "./registry";
@@ -115,6 +116,22 @@ export class SolanaMessenger {
     const result = loadOrGenerateEncryptionKeypair(myAddress, this.keysDir);
     this.encryptionKeypair = { publicKey: result.publicKey, secretKey: result.secretKey };
     const encryptionAddress = decoder.decode(this.encryptionKeypair.publicKey);
+
+    // Check if registry needs migration (old 88-byte struct → new 104-byte struct)
+    const registryPda = await deriveRegistryPda(myAddress, this.programId);
+    const registryAccount = await this.rpc.getAccountInfo(address(registryPda), { encoding: "base64" }).send();
+    if (registryAccount.value) {
+      const data = Buffer.from(registryAccount.value.data[0] as unknown as string, "base64");
+      if (data.length === 88) {
+        // Old struct — migrate
+        const migrateIx = buildMigrateRegistryInstruction({ owner: myAddress, registryPda });
+        if (this.signerPromise) {
+          const signer = await this.signerPromise;
+          migrateIx.accounts[1] = { ...migrateIx.accounts[1], signer };
+        }
+        await this.sendInstruction(migrateIx);
+      }
+    }
 
     const onChainKey = await lookupEncryptionKey(this.rpc, myAddress, this.programId);
     let status: "registered" | "already_registered" | "updated";

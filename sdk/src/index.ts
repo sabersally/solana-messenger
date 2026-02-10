@@ -7,6 +7,7 @@ export {
   buildSetMinFeeInstruction,
   buildInitializeConfigInstruction,
   buildUpdateConfigInstruction,
+  buildMigrateRegistryInstruction,
 } from "./instructions";
 
 // PDA

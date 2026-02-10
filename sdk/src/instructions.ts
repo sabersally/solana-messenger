@@ -186,6 +186,28 @@ export function buildUpdateConfigInstruction(params: {
   };
 }
 
+export function buildMigrateRegistryInstruction(params: {
+  owner: string;
+  registryPda: string;
+  programId?: string;
+}): { programAddress: ReturnType<typeof address>; accounts: any[]; data: Uint8Array } {
+  const programId = params.programId ?? DEFAULT_PROGRAM_ID;
+  // sha256("global:migrate_registry")[0..8]
+  const MIGRATE_DISC = new Uint8Array([216, 135, 36, 181, 124, 116, 222, 131]);
+  const data = new Uint8Array(8);
+  data.set(MIGRATE_DISC, 0);
+
+  return {
+    programAddress: address(programId),
+    accounts: [
+      { address: address(params.registryPda), role: AccountRole.WRITABLE },
+      { address: address(params.owner), role: AccountRole.WRITABLE_SIGNER },
+      { address: address(SYSTEM_PROGRAM), role: AccountRole.READONLY },
+    ],
+    data,
+  };
+}
+
 export function buildDeregisterInstruction(params: {
   owner: string;
   registryPda: string;
