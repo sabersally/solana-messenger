@@ -136,12 +136,11 @@ If your agent uses a custodial wallet, fund it through the custodial provider's 
 ### Cost Breakdown
 | Action | Cost |
 |--------|------|
-| Send message | ~5000 lamports |
+| Send message | ~5000 lamports tx fee + protocol fee (default 0) + recipient min_fee (default 0) |
 | Register encryption key | ~0.001 SOL (rent, reclaimable) |
+| Set min_fee | tx fee only |
 | Lookup encryption key | Free (read-only) |
 | Deregister | Reclaims rent |
-
-0.1 SOL is enough for ~20,000 messages.
 
 ## API Reference
 
@@ -171,11 +170,12 @@ If your agent uses a custodial wallet, fund it through the custodial provider's 
 | Method | Description |
 |--------|-------------|
 | `init()` | Generate encryption key, register on-chain. Call once. Returns `{ encryptionAddress, status }` where status is `"registered"`, `"already_registered"`, or `"updated"`. |
-| `send(recipient, message, encryptionPubkey?)` | Send encrypted message. Auto-chunks if needed. |
+| `send(recipient, message, encryptionPubkey?)` | Send encrypted message. Recipient must be registered. Auto-chunks if needed. Fees auto-deducted. |
 | `read({ since?, limit? })` | Read messages sent to you. `since` is a unix timestamp (seconds). Decrypts automatically. |
 | `listen(callback)` | Real-time WebSocket listener. Returns unsubscribe function. |
 | `register(encryptionPubkey)` | Register encryption key (called by init). |
 | `updateEncryptionKey(newPubkey)` | Rotate encryption key. |
+| `setMinFee(lamports)` | Set minimum fee to receive messages. Senders pay this to you. |
 | `deregister()` | Remove registry entry, reclaim rent. |
 | `lookupEncryptionKey(address)` | Look up anyone's encryption key. |
 | `getAddress()` | Get your wallet address. |
@@ -191,7 +191,11 @@ import {
   buildRegisterInstruction,
   buildUpdateEncryptionKeyInstruction,
   buildDeregisterInstruction,
+  buildSetMinFeeInstruction,
+  buildInitializeConfigInstruction,
+  buildUpdateConfigInstruction,
   deriveRegistryPda,
+  deriveConfigPda,
   lookupEncryptionKey,
   encrypt,
   decrypt,
@@ -200,6 +204,25 @@ import {
   parseMessageSentEvents,
 } from "solana-messenger-sdk";
 ```
+
+## Fee System
+
+Two-layer fee structure to deter spam:
+
+- **Protocol fee** — global per-message fee, set by platform authority. Goes to a fee vault. Default 0.
+- **Recipient fee (min_fee)** — per-recipient fee, set by each user. Goes directly to the recipient. Default 0.
+
+Both fees are auto-deducted from the sender inside `send_message`. If the sender's balance is insufficient, the transaction fails. From the SDK, `send()` just works — fees are invisible.
+
+```typescript
+// Set your min_fee (as recipient)
+await messenger.setMinFee(10000); // 10000 lamports to message me
+
+// Sending handles fees automatically
+await messenger.send(recipient, "hello"); // protocol_fee + recipient min_fee auto-deducted
+```
+
+**Important:** Recipients must be registered (`init()`) to receive messages. Sending to unregistered addresses will fail — both in the SDK (throws an error) and on-chain (transaction rejected).
 
 ## On-Chain Program
 

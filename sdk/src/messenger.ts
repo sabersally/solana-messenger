@@ -22,8 +22,9 @@ import {
   buildRegisterInstruction,
   buildUpdateEncryptionKeyInstruction,
   buildDeregisterInstruction,
+  buildSetMinFeeInstruction,
 } from "./instructions";
-import { deriveRegistryPda } from "./pda";
+import { deriveRegistryPda, deriveConfigPda } from "./pda";
 import { lookupEncryptionKey } from "./registry";
 import { loadOrGenerateEncryptionKeypair } from "./keys";
 import { homedir } from "os";
@@ -79,6 +80,8 @@ export class SolanaMessenger {
   private keysDir: string;
   private encryptionKeypair: { publicKey: Uint8Array; secretKey: Uint8Array } | null = null;
   private initialized = false;
+  private configPda: string | null = null;
+  private feeVault: string | null = null;
 
   // Self-custody mode
   private signerPromise: Promise<KeyPairSigner> | null = null;
@@ -126,6 +129,18 @@ export class SolanaMessenger {
       status = "updated";
     }
 
+    // Load platform config (fee vault address)
+    this.configPda = await deriveConfigPda(this.programId);
+    try {
+      const configAccount = await this.rpc.getAccountInfo(address(this.configPda), { encoding: "base64" }).send();
+      if (configAccount.value) {
+        const data = Buffer.from(configAccount.value.data[0] as unknown as string, "base64");
+        // Skip 8-byte discriminator, read authority (32) then fee_vault (32)
+        const { getBase58Decoder: getDec } = await import("@solana/kit");
+        this.feeVault = getDec().decode(data.subarray(40, 72));
+      }
+    } catch {}
+
     this.initialized = true;
     return { encryptionAddress, status };
   }
@@ -157,11 +172,12 @@ export class SolanaMessenger {
     let encryptToBytes: Uint8Array;
     if (encryptionPubkey) {
       encryptToBytes = encryptionPubkey;
-    } else if (this.initialized) {
-      const lookedUp = await lookupEncryptionKey(this.rpc, recipient, this.programId);
-      encryptToBytes = lookedUp ? addressToBytes(lookedUp) : addressToBytes(recipient);
     } else {
-      encryptToBytes = addressToBytes(recipient);
+      const lookedUp = await lookupEncryptionKey(this.rpc, recipient, this.programId);
+      if (!lookedUp) {
+        throw new Error(`Recipient ${recipient} is not registered. They must call init() before they can receive messages.`);
+      }
+      encryptToBytes = addressToBytes(lookedUp);
     }
 
     // For encryption: use identity key (self-custody) or encryption keypair (external signer)
@@ -172,6 +188,11 @@ export class SolanaMessenger {
 
     const signatures: string[] = [];
 
+    if (!this.configPda || !this.feeVault) {
+      throw new Error("Platform config not loaded. Call init() first.");
+    }
+    const recipientRegistryPda = await deriveRegistryPda(recipient, this.programId);
+
     for (const chunk of chunks) {
       const { ciphertext, nonce } = encrypt(chunk, encryptionSecretKey, encryptToBytes);
       const ix = buildSendMessageInstruction({
@@ -179,6 +200,9 @@ export class SolanaMessenger {
         recipient,
         ciphertext,
         nonce,
+        configPda: this.configPda,
+        feeVault: this.feeVault,
+        recipientRegistryPda,
         programId: this.programId,
       });
 
@@ -366,6 +390,24 @@ export class SolanaMessenger {
     const ix = buildDeregisterInstruction({
       owner: myAddress,
       registryPda,
+      programId: this.programId,
+    });
+    if (this.signerPromise) {
+      const signer = await this.signerPromise;
+      ix.accounts[1] = { ...ix.accounts[1], signer };
+    }
+
+    return this.sendInstruction(ix);
+  }
+
+  async setMinFee(minFee: number): Promise<string> {
+    const myAddress = await this.getAddress();
+    const registryPda = await deriveRegistryPda(myAddress, this.programId);
+
+    const ix = buildSetMinFeeInstruction({
+      owner: myAddress,
+      registryPda,
+      minFee: BigInt(minFee),
       programId: this.programId,
     });
     if (this.signerPromise) {

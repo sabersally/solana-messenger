@@ -4,10 +4,13 @@ export {
   buildRegisterInstruction,
   buildUpdateEncryptionKeyInstruction,
   buildDeregisterInstruction,
+  buildSetMinFeeInstruction,
+  buildInitializeConfigInstruction,
+  buildUpdateConfigInstruction,
 } from "./instructions";
 
 // PDA
-export { deriveRegistryPda } from "./pda";
+export { deriveRegistryPda, deriveConfigPda } from "./pda";
 
 // Registry lookup
 export { lookupEncryptionKey } from "./registry";

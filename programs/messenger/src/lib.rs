@@ -63,21 +63,19 @@ pub mod messenger {
             )?;
         }
 
-        // Recipient fee (if registry exists and min_fee > 0)
-        if let Some(registry) = &ctx.accounts.recipient_registry {
-            let min_fee = registry.min_fee;
-            if min_fee > 0 {
-                system_program::transfer(
-                    CpiContext::new(
-                        ctx.accounts.system_program.to_account_info(),
-                        system_program::Transfer {
-                            from: ctx.accounts.sender.to_account_info(),
-                            to: ctx.accounts.recipient_wallet.to_account_info(),
-                        },
-                    ),
-                    min_fee,
-                )?;
-            }
+        // Recipient fee
+        let min_fee = ctx.accounts.recipient_registry.min_fee;
+        if min_fee > 0 {
+            system_program::transfer(
+                CpiContext::new(
+                    ctx.accounts.system_program.to_account_info(),
+                    system_program::Transfer {
+                        from: ctx.accounts.sender.to_account_info(),
+                        to: ctx.accounts.recipient_wallet.to_account_info(),
+                    },
+                ),
+                min_fee,
+            )?;
         }
 
         emit!(MessageSent {
@@ -178,14 +176,17 @@ pub struct SendMessage<'info> {
         constraint = fee_vault.key() == config.fee_vault @ MessengerError::InvalidFeeVault,
     )]
     pub fee_vault: AccountInfo<'info>,
-    /// Optional: recipient's registry PDA (for min_fee lookup)
+    /// Recipient's registry PDA — must exist (recipient must be registered)
     #[account(
-        seeds = [b"messenger", recipient_wallet.key().as_ref()],
+        seeds = [b"messenger", recipient_registry.owner.as_ref()],
         bump,
     )]
-    pub recipient_registry: Option<Account<'info, EncryptionRegistry>>,
-    /// CHECK: recipient wallet receives min_fee, must match registry owner
-    #[account(mut)]
+    pub recipient_registry: Account<'info, EncryptionRegistry>,
+    /// CHECK: recipient wallet receives min_fee, validated as registry owner
+    #[account(
+        mut,
+        constraint = recipient_wallet.key() == recipient_registry.owner @ MessengerError::InvalidRecipient,
+    )]
     pub recipient_wallet: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
@@ -283,4 +284,6 @@ pub enum MessengerError {
     EmptyMessage,
     #[msg("Fee vault does not match platform config")]
     InvalidFeeVault,
+    #[msg("Recipient wallet does not match registry owner")]
+    InvalidRecipient,
 }
