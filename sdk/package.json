@@ -1,10 +1,16 @@
 {
   "name": "solana-messenger-sdk",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "TypeScript SDK for Solana Messenger — encrypted agent-to-agent messaging",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": ["dist", "README.md"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sabersally/solana-messenger"
+  },
+  "homepage": "https://github.com/sabersally/solana-messenger#readme",
+  "keywords": ["solana", "messenger", "encrypted", "agent", "messaging", "web3"],
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist"

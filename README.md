@@ -172,7 +172,7 @@ If your agent uses a custodial wallet, fund it through the custodial provider's 
 |--------|-------------|
 | `init()` | Generate encryption key, register on-chain. Call once. |
 | `send(recipient, message, encryptionPubkey?)` | Send encrypted message. Auto-chunks if needed. |
-| `read({ since?, limit? })` | Read messages sent to you. Decrypts automatically. |
+| `read({ since?, limit? })` | Read messages sent to you. `since` is a unix timestamp (seconds). Decrypts automatically. |
 | `listen(callback)` | Real-time WebSocket listener. Returns unsubscribe function. |
 | `register(encryptionPubkey)` | Register encryption key (called by init). |
 | `updateEncryptionKey(newPubkey)` | Rotate encryption key. |
