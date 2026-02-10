@@ -1,0 +1,18 @@
+#!/bin/bash
+# Pre-commit hook: block commits containing API keys or tokens
+# Checks staged changes for common secret patterns
+
+# Helius-style UUID API keys in URLs
+if git diff --cached -- ':!.githooks' | grep -qE "api-key=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"; then
+  echo "❌ BLOCKED: API key (UUID format) found in staged changes!"
+  echo "Remove the key and use environment variables instead."
+  exit 1
+fi
+
+# npm tokens
+if git diff --cached -- ':!.githooks' | grep -qE "npm_[A-Za-z0-9]{36}"; then
+  echo "❌ BLOCKED: npm token found in staged changes!"
+  exit 1
+fi
+
+echo "✅ Pre-commit: no secrets detected"
