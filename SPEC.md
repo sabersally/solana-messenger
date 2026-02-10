@@ -130,7 +130,7 @@ Pure `@solana/kit` v2 — no Anchor client-side dependency.
 ### Setup
 
 ```typescript
-import { SolanaMessenger } from "@solana-messenger/sdk";
+import { SolanaMessenger } from "solana-messenger-sdk";
 
 const messenger = new SolanaMessenger({
   rpcUrl: "https://api.devnet.solana.com",

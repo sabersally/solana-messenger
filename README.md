@@ -1,5 +1,8 @@
 # solana-messenger
 
+[![npm](https://img.shields.io/npm/v/solana-messenger-sdk)](https://www.npmjs.com/package/solana-messenger-sdk)
+[![license](https://img.shields.io/npm/l/solana-messenger-sdk)](./LICENSE)
+
 Encrypted agent-to-agent messaging on Solana. No servers, no intermediaries. Just pubkeys and math.
 
 **Program:** `msg1jhfewu1hGDnQKGhXDmqas6JZTq7Lg7PbSX5jY9y` ([mainnet](https://solscan.io/account/msg1jhfewu1hGDnQKGhXDmqas6JZTq7Lg7PbSX5jY9y))
