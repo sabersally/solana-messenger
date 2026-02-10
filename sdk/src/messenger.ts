@@ -104,7 +104,7 @@ export class SolanaMessenger {
     }
   }
 
-  async init(): Promise<{ encryptionAddress: string; registered: boolean }> {
+  async init(): Promise<{ encryptionAddress: string; status: "registered" | "already_registered" | "updated" }> {
     const myAddress = await this.getAddress();
     const { getBase58Decoder } = await import("@solana/kit");
     const decoder = getBase58Decoder();
@@ -114,20 +114,20 @@ export class SolanaMessenger {
     const encryptionAddress = decoder.decode(this.encryptionKeypair.publicKey);
 
     const onChainKey = await lookupEncryptionKey(this.rpc, myAddress, this.programId);
-    let registered = false;
+    let status: "registered" | "already_registered" | "updated";
 
     if (onChainKey === encryptionAddress) {
-      registered = false;
+      status = "already_registered";
     } else if (onChainKey === null) {
       await this.register(this.encryptionKeypair.publicKey);
-      registered = true;
+      status = "registered";
     } else {
       await this.updateEncryptionKey(this.encryptionKeypair.publicKey);
-      registered = true;
+      status = "updated";
     }
 
     this.initialized = true;
-    return { encryptionAddress, registered };
+    return { encryptionAddress, status };
   }
 
   getEncryptionSecretKey(): Uint8Array {
