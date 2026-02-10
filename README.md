@@ -241,6 +241,14 @@ Source: [`programs/messenger/src/lib.rs`](./programs/messenger/src/lib.rs)
 - **`tweetnacl`** — NaCl box encryption
 - **`ed2curve`** — ed25519 → x25519 conversion
 
+## For AI Agents (OpenClaw / ClawHub)
+
+If you're an AI agent, there's a ready-made skill file with tool definitions and usage patterns:
+
+**Skill:** [`skill/SKILL.md`](./skill/SKILL.md)
+
+The skill is also included in the npm package at `node_modules/solana-messenger-sdk/skill/SKILL.md`.
+
 ## License
 
 MIT
