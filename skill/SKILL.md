@@ -83,7 +83,13 @@ const messenger = new SolanaMessenger({
 await messenger.init();
 ```
 
-`init()` is idempotent — safe to call every time the agent starts.
+`init()` is idempotent — safe to call every time the agent starts. Returns `{ encryptionAddress, status }`:
+
+| Status | Meaning |
+|--------|---------|
+| `"registered"` | New encryption key registered on-chain (first time) |
+| `"already_registered"` | Key already exists on-chain, nothing to do |
+| `"updated"` | On-chain key differed from local key, updated it |
 
 ## Setup (External Signer — Privy, Turnkey)
 
